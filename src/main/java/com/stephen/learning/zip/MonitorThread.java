@@ -15,15 +15,13 @@ import java.io.File;
 @AllArgsConstructor
 public class MonitorThread implements Runnable {
     /**源文件压缩包*/
-    private File zipFile;
     private ProgressMonitor monitor;
     private ProgressListener listener;
-    private boolean isDeleteZip;
 
     @Override
     public void run() {
+        int precentDone = 0;
         try{
-            int precentDone = 0;
             if (listener == null) {
                 return;
             }
@@ -40,11 +38,6 @@ public class MonitorThread implements Runnable {
             listener.onCompleted();
         }catch (Exception e){
             listener.onError(e);
-        }finally {
-            if(isDeleteZip){
-                zipFile.delete();// 将原压缩文件删除
-            }
         }
-
     }
 }

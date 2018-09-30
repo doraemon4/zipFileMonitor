@@ -8,8 +8,6 @@ import net.lingala.zip4j.progress.ProgressMonitor;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @Auther: jack
@@ -92,6 +90,42 @@ public class FileCompressUtil {
         }
     }
 
+    public static File encryptZipWithProgress(String srcPath, String destPath, String pass,ProgressListener listener)throws ZipException{
+        File srcDir = new File(srcPath);
+        if (!srcDir.exists()) {
+            log.error("source file path not exists. srcPath=" + srcPath);
+            return null;
+        } else {
+            File destDir = new File(destPath);
+            if (!destDir.exists()) {
+                destDir.mkdirs();
+            }
+
+            if (destDir.isFile()) {
+                log.error("destPath expected a directory, but is an exists file");
+                return null;
+            } else {
+                String destStr = srcDir + ".zip";
+                File destFile = new File(destStr);
+                ZipFile zipFile = new ZipFile(destFile);
+                ProgressMonitor monitor =zipFile.getProgressMonitor();
+                ZipParameters parameters = new ZipParameters();
+                parameters.setCompressionMethod(8);
+                parameters.setCompressionLevel(5);
+                parameters.setEncryptionMethod(99);
+                parameters.setAesKeyStrength(3);
+                parameters.setEncryptFiles(true);
+                parameters.setPassword(pass);
+
+                Thread thread = new Thread(new MonitorThread(monitor, listener));
+                thread.start();
+                zipFile.setRunInThread(false);
+
+                zipFile.addFolder(srcPath, parameters);
+                return zipFile.getFile();
+            }
+        }
+    }
     /**
      * 解压压缩文件
      *
@@ -113,7 +147,7 @@ public class FileCompressUtil {
         zipFile.extractAll(targetFile);
     }
 
-    public static void encryptUnZipWithProgress(String srcFile, String targetFile, String pass, ProgressListener listener, boolean isDeleteZip) throws ZipException {
+    public static void encryptUnZipWithProgress(String srcFile, String targetFile, String pass, ProgressListener listener) throws ZipException {
         File file = new File(srcFile);
         ZipFile zipFile = new ZipFile(srcFile);
         zipFile.setFileNameCharset("utf-8");
@@ -130,15 +164,31 @@ public class FileCompressUtil {
         }
         //监听
         ProgressMonitor monitor = zipFile.getProgressMonitor();
-        Thread thread = new Thread(new MonitorThread(file, monitor, listener, isDeleteZip));
+        Thread thread = new Thread(new MonitorThread(monitor, listener));
         thread.start();
         // true 在子线程中进行解压 , false主线程中解压
-        zipFile.setRunInThread(true);
+        zipFile.setRunInThread(false);
         try {
             zipFile.extractAll(targetFile);
         } catch (Exception e) {
             monitor.cancelAllTasks();
             listener.onError(e);
         }
+    }
+
+    public static   void deleteDirWihtFile(File dir) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()){
+            return;
+        }
+        for (File file : dir.listFiles()) {
+            if (file.isFile()){
+                // 删除所有文件
+                file.delete();
+            }
+            else if (file.isDirectory()){
+                deleteDirWihtFile(file);
+            }
+        }
+        dir.delete();// 删除目录本身
     }
 }

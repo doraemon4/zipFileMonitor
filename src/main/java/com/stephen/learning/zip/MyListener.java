@@ -8,21 +8,21 @@ package com.stephen.learning.zip;
 public class MyListener implements ProgressListener {
     @Override
     public void onStart() {
-        System.out.println("开始解压..........");
+        System.out.println("开始..........");
     }
 
     @Override
     public void onProgress(long progress) {
-        System.out.println("解压进度为:"+progress);
+        System.out.println("进度为:"+progress);
     }
 
     @Override
     public void onError(Exception e) {
-        System.out.println("解压失败..........");
+        System.out.println("失败..........");
     }
 
     @Override
     public void onCompleted() {
-        System.out.println("解压成功..........");
+        System.out.println("成功..........");
     }
 }
